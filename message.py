@@ -4,6 +4,21 @@ Module is used for working with net messaging protocols
 import functools
 
 
+BYTE_ORDER = 'big'
+
+
+def gen_answer_to_source(success: bool, serial_num: int = None):
+    if success:
+        b_serial_num = serial_num.to_bytes(2, byteorder=BYTE_ORDER)
+    else:
+        b_serial_num = bytes([0x00, 0x00])
+    res = bytes([
+        0x11 if success else 0x12,
+        *b_serial_num,
+    ])
+    return bytes([*res, *xor(res)])
+
+
 def parse_source_bytes(bytes_obj: bytes) -> dict:
     """
     Transforms bytes received from source to dict
@@ -18,12 +33,12 @@ def parse_source_bytes(bytes_obj: bytes) -> dict:
     """
     if len(bytes_obj) < 13 or bytes_obj[0] != 0x01:
         return {}
-    num = int.from_bytes(bytes_obj[1:3], byteorder='big', signed=False)
+    num = int.from_bytes(bytes_obj[1:3], byteorder=BYTE_ORDER, signed=False)
     source_id = str(bytes_obj[3:11], encoding='ascii')
     source_state = bytes_obj[11]
     if source_state not in (0x01, 0x02, 0x03):
         return {}
-    num_of_msgs = int.from_bytes(bytes([bytes_obj[12]]), byteorder='big', signed=False)
+    num_of_msgs = int.from_bytes(bytes([bytes_obj[12]]), byteorder=BYTE_ORDER, signed=False)
     byte_msgs = bytes_obj[13:]
     if len(byte_msgs) != num_of_msgs*13:
         return {}
@@ -40,7 +55,7 @@ def _iter_source_msgs(byte_msgs: bytes):
     cur_pos = 0
     while cur_pos+8 < len(byte_msgs):
         name = byte_msgs[cur_pos:cur_pos+8]
-        value = int.from_bytes(byte_msgs[cur_pos+8:cur_pos+12], byteorder='big')
+        value = int.from_bytes(byte_msgs[cur_pos+8:cur_pos+12], byteorder=BYTE_ORDER)
         xor_byte = xor(byte_msgs[cur_pos:cur_pos+12])
         if xor_byte != bytes([byte_msgs[cur_pos+12]]):
             yield None

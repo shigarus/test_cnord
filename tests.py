@@ -4,6 +4,10 @@ from itertools import chain
 import message
 
 
+def _with_xor(bytes_obj: bytes) -> bytes:
+    return bytes([*bytes_obj, *message.xor(bytes_obj)])
+
+
 class TestParseSourceBytes(unittest.TestCase):
 
     def test_incorrect_cases(self):
@@ -25,13 +29,16 @@ class TestParseSourceBytes(unittest.TestCase):
             (b'uiersuis', 2244),
             (b'ugerwuis', 5344),
         )
-        self.messages_as_bytes = [
+        self.messages_as_bytes = (
             bytes([
                 *key,
                 *val.to_bytes(4, byteorder='big'),
-                *message.xor(bytes([*key, *val.to_bytes(2, byteorder='big')]))
             ])
             for key, val in self.messages
+        )
+        self.messages_as_bytes = [
+            _with_xor(msg)
+            for msg in self.messages_as_bytes
         ]
         self.correct_meta = 0x01, 0x00, 0x00, *b'asdfghjk', 0x03
         self.correct_answer_to_meta = dict(
@@ -73,3 +80,14 @@ class TestParseSourceBytes(unittest.TestCase):
         out.update(self.correct_answer_to_meta)
         res = message.parse_source_bytes(inp)
         assert res == out, f'received {res} expects  {out}'
+
+
+class TestGenAnswerToSource(unittest.TestCase):
+
+    def test_fail(self):
+        res = message.gen_answer_to_source(False)
+        assert res == _with_xor(bytes([0x12, 0x00, 0x00])), f'got {res}'
+
+    def test_succes(self):
+        res = message.gen_answer_to_source(True, 2)
+        assert res == _with_xor(bytes([0x11, 0x00, 0x02])), f'got {res}'
