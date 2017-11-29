@@ -56,7 +56,12 @@ class Application:
         pass
 
     def _on_source_close(self, source_stream: IOStream):
-        pass
+        source_id = next(
+            (k for k, v in self._sources_connects if v is source_stream),
+            None,
+        )
+        if source_id:
+            self._sources_connects.pop(source_id)
 
     def _on_listener_connect(self, listener_stream: IOStream):
         pass
