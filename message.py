@@ -39,7 +39,7 @@ def parse_source_bytes(bytes_obj: bytes) -> dict:
         num=int,  # serial number of the message
         source_id=str,  # identifier of the source
         source_state=byte,  # acceptable values: 0x01 --IDLE, 0x02 --ACTIVE, 0x03 --RECHARGE
-        msgs=list, # every item is pair of (name, value) or None if message is corrupted
+        msgs=Sequence[Tuple[str, int]], # every item is pair of (name, value) or None if message is corrupted
     )
     """
     if len(bytes_obj) < 13 or bytes_obj[0] != 0x01:
@@ -53,12 +53,13 @@ def parse_source_bytes(bytes_obj: bytes) -> dict:
     byte_msgs = bytes_obj[13:]
     if len(byte_msgs) != num_of_msgs*13:
         return {}
+    correct_msgs = filter(None, _iter_source_msgs(byte_msgs))
     return dict(
         header=0x01,
         num=num,
         source_id=source_id,
         source_state=source_state,
-        msgs=[msg for msg in _iter_source_msgs(byte_msgs)],
+        msgs=[msg for msg in correct_msgs],
     )
 
 

@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Callable
+from typing import Callable, Sequence, Tuple
 
 from tornado.iostream import StreamClosedError, IOStream
 from tornado.ioloop import IOLoop
@@ -65,7 +65,7 @@ class Application:
     def _on_listener_connect(self, listener_stream: IOStream):
         id_ = store.ListenerStore.add_listener()
         self._listeners_connects[id_] = listener_stream
-        self._notify_about_sources(listener_stream, id_)
+        self._notify_about_sources(listener_stream)
 
     def _on_listener_close(self, listener_stream: IOStream):
         listener_id = next(
@@ -76,7 +76,7 @@ class Application:
             self._listeners_connects.pop(listener_id)
 
     @staticmethod
-    async def _notify_about_sources(listener_stream, id_):
+    async def _notify_about_sources(listener_stream: IOStream):
         sources = store.SourcesStore.get_all()
         str_per_source = (
             _gen_notify_aboute_source_msg(source)
@@ -86,7 +86,7 @@ class Application:
         for source in sources:
             store.ListenerStore.set_notified(source.id_)
 
-    async def _send_to_listeners(self, msgs, source_id):
+    async def _send_to_listeners(self, msgs: Sequence[Tuple[str, int]], source_id):
         for listener in store.ListenerStore.get_all():
             listener_stream = self._listeners_connects[listener.id_]
 
@@ -95,10 +95,9 @@ class Application:
                 source = store.SourcesStore.get_state(source_id)
                 await listener_stream.write(_gen_notify_aboute_source_msg(source))
 
-            msgs_without_none = filter(None, msgs)
             listener_msg = ''.join(
                 f"[{source_id}] {key} | {value}\r\n"
-                for key, value in msgs_without_none
+                for key, value in msgs
             )
             await listener_stream.write(listener_msg)
 

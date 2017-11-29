@@ -74,8 +74,8 @@ class TestParseSourceBytes(unittest.TestCase):
         changed_byte = inp[-1] + 1
         inp = bytes([*inp[:-1], changed_byte])
         out = dict(msgs=[
-            msg if i != len(self.messages) - 1 else None
-            for i, msg in enumerate(self.messages)
+            msg for i, msg in enumerate(self.messages)
+            if i != len(self.messages) - 1
         ])
         out.update(self.correct_answer_to_meta)
         res = message.parse_source_bytes(inp)
