@@ -11,7 +11,14 @@ import message
 import store
 
 
-class Application:
+class Dispatcher:
+    """
+    Serves as a bridge between sources and listeners.
+
+    Receives msgs from sources and redirects them to listeners.
+    Notifies sources about received messages.
+    Notifies listeners about existed sources.
+    """
 
     def __init__(self):
         self._sources_server = SourcesServer(
@@ -162,8 +169,8 @@ def main():
         level=logging.DEBUG if conf['debug'] else logging.INFO,
         format='%(levelname)s:%(asctime)s:%(message)s',
     )
-    app = Application()
-    app.listen(
+    disp = Dispatcher()
+    disp.listen(
         sources_port=conf['sources_port'],
         listeners_port=conf['listeners_port'],
     )
