@@ -45,7 +45,7 @@ class TestParseSourceBytes(unittest.TestCase):
             header=0x01,
             num=0,
             source_id='asdfghjk',
-            source_state=0x003,
+            source_state='RECHARGE',
         )
 
     def test_empty_msgs(self):

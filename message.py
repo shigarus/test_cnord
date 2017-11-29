@@ -6,6 +6,12 @@ import functools
 
 BYTE_ORDER = 'big'
 
+state_translate = {
+    0x01: 'IDLE',
+    0x02: 'ACTIVE',
+    0x03: 'RECHARGE',
+}
+
 
 def gen_answer_to_source(success: bool, serial_num: int = None) -> bytes:
     """
@@ -40,8 +46,8 @@ def parse_source_bytes(bytes_obj: bytes) -> dict:
         return {}
     num = int.from_bytes(bytes_obj[1:3], byteorder=BYTE_ORDER, signed=False)
     source_id = str(bytes_obj[3:11], encoding='ascii')
-    source_state = bytes_obj[11]
-    if source_state not in (0x01, 0x02, 0x03):
+    source_state = state_translate.get(bytes_obj[11])
+    if source_state is None:
         return {}
     num_of_msgs = int.from_bytes(bytes([bytes_obj[12]]), byteorder=BYTE_ORDER, signed=False)
     byte_msgs = bytes_obj[13:]
