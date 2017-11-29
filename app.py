@@ -58,6 +58,7 @@ class Dispatcher:
             source_id=source_id,
             serial_num=parsed['num'],
             state=parsed['source_state'],
+            last_received=datetime.datetime.now(),
         )
         if source_id not in self._sources_connects:
             self._sources_connects[source_id] = source_stream

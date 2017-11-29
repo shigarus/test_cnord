@@ -14,6 +14,18 @@ Listener = collections.namedtuple('Listener', 'id_ sources_notified')
 class _SourcesStore:
     """
     Represents store for state of sources.
+    >>> import datetime
+    >>> store = _SourcesStore()
+    >>> store.get_all()
+    ()
+    >>> store.update_state('asdfqwer', 23, 4, datetime.datetime(2000, 1, 1))
+    >>> store.get_all()
+    (Source(id_='asdfqwer', serial_num=23, state=4, last_received=datetime.datetime(2000, 1, 1, 0, 0)),)
+    >>> store.get_state('asdfqwer')
+    Source(id_='asdfqwer', serial_num=23, state=4, last_received=datetime.datetime(2000, 1, 1, 0, 0))
+    >>> store.update_state('asdfqwer', 30, 4, datetime.datetime(2000, 1, 5))
+    >>> store.get_state('asdfqwer')
+    Source(id_='asdfqwer', serial_num=30, state=4, last_received=datetime.datetime(2000, 1, 5, 0, 0))
     """
 
     def __init__(self):
@@ -23,13 +35,14 @@ class _SourcesStore:
                      source_id: str,
                      serial_num: int,
                      state: int,
+                     last_received: datetime.datetime
                      ):
         """ Creates or update state of source """
         self._sources[source_id] = Source(
             id_=source_id,
             serial_num=serial_num,
             state=state,
-            last_received=datetime.datetime.now(),
+            last_received=last_received,
         )
 
     def get_state(self, source_id: str) -> Source:
