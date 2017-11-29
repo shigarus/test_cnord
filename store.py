@@ -56,6 +56,21 @@ class _ListenersStore:
     """
     Represents store for listeners.
     Helps track which listeners were notified about which sources.
+    >>> listener = _ListenersStore()
+    >>> listener.get_all()
+    ()
+    >>> listener.add_listener()
+    0
+    >>> listener.is_notified(0, 'asdfqwer')
+    False
+    >>> listener.set_notified(0, 'asdfqwer')
+    >>> listener.is_notified(0, 'asdfqwer')
+    True
+    >>> listener.get_all()
+    (Listener(id_=0, sources_notified={'asdfqwer'}),)
+    >>> listener.remove_listener(0)
+    >>> listener.get_all()
+    ()
     """
 
     def __init__(self):
@@ -84,5 +99,5 @@ class _ListenersStore:
         return tuple(self._listeners.values())
 
 
-ListenerStore = _ListenersStore()
+ListenersStore = _ListenersStore()
 SourcesStore = _SourcesStore()

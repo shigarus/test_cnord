@@ -87,7 +87,7 @@ class Dispatcher:
         """
         Registers a listener in the system
         """
-        id_ = store.ListenerStore.add_listener()
+        id_ = store.ListenersStore.add_listener()
         self._listeners_connects[id_] = listener_stream
         await self._notify_about_sources(id_, listener_stream)
 
@@ -117,10 +117,10 @@ class Dispatcher:
         # notified about a source of the message
         for source in sources:
             logging.debug(f'Listener {listener_id} notified about source {source.id_}')
-            store.ListenerStore.set_notified(listener_id, source.id_)
+            store.ListenersStore.set_notified(listener_id, source.id_)
 
     async def _send_to_listeners(self, msgs: Sequence[Tuple[str, int]], source_id):
-        for listener in store.ListenerStore.get_all():
+        for listener in store.ListenersStore.get_all():
             listener_stream = self._listeners_connects[listener.id_]
 
             # ensure listener knows about source before sending him current messages
