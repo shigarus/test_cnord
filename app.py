@@ -79,7 +79,7 @@ class Application:
     async def _notify_about_sources(listener_stream: IOStream):
         sources = store.SourcesStore.get_all()
         str_per_source = (
-            _gen_notify_aboute_source_msg(source)
+            _gen_notify_about_source_msg(source)
             for source in sources
         )
         await listener_stream.write(''.join(str_per_source))
