@@ -11,11 +11,11 @@ class Application:
 
     def __init__(self):
         self._sources_server = SourcesServer(self._on_source_msg)
-        self._listener_server = ListenersServer()
+        self._listeners_server = ListenersServer()
 
     def listen(self, sources_port, listeners_port):
         self._sources_server.listen(sources_port)
-        self._listener_server.listen(listeners_port)
+        self._listeners_server.listen(listeners_port)
 
     def _on_source_msg(self, source, msg):
         pass
