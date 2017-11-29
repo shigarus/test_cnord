@@ -86,6 +86,22 @@ class Application:
         for source in sources:
             store.ListenerStore.set_notified(source.id_)
 
+    async def _send_to_listeners(self, msgs, source_id):
+        for listener in store.ListenerStore.get_all():
+            listener_stream = self._listeners_connects[listener.id_]
+
+            # ensure listener knows about source before sending him current messages
+            if source_id not in listener.sources_notified:
+                source = store.SourcesStore.get_state(source_id)
+                await listener_stream.write(_gen_notify_aboute_source_msg(source))
+
+            msgs_without_none = filter(None, msgs)
+            listener_msg = ''.join(
+                f"[{source_id}] {key} | {value}\r\n"
+                for key, value in msgs_without_none
+            )
+            await listener_stream.write(listener_msg)
+
 
 def _gen_notify_aboute_source_msg(source: store.Source):
     time_since_last_msg = datetime.datetime.now() - source.last_received
