@@ -52,10 +52,7 @@ class Application:
             serial_num=parsed['num'],
         )
         await source_stream.write(answer_to_source)
-        self._send_to_listeners(parsed['msgs'])
-
-    async def _send_to_listeners(self, msgs):
-        pass
+        self._send_to_listeners(parsed['msgs'], source_id)
 
     def _on_source_close(self, source_stream: IOStream):
         source_id = next(
@@ -68,7 +65,7 @@ class Application:
     def _on_listener_connect(self, listener_stream: IOStream):
         id_ = store.ListenerStore.add_listener()
         self._listeners_connects[id_] = listener_stream
-        self._notify_about_sources(listener_stream)
+        self._notify_about_sources(listener_stream, id_)
 
     def _on_listener_close(self, listener_stream: IOStream):
         listener_id = next(
@@ -79,14 +76,21 @@ class Application:
             self._listeners_connects.pop(listener_id)
 
     @staticmethod
-    def _notify_about_sources(listener_stream):
-        str_per_source = []
-        for source in store.SourcesStore.get_all():
-            time_since_last_msg = datetime.datetime.now() - source.last_received
-            ms_since_last_msg = time_since_last_msg.total_seconds() * 1000.0
-            msg = f'[{source.id_}] {source.serial_num} | {source.state} | {ms_since_last_msg}\r\n'
-            str_per_source.append(msg)
-        listener_stream.write(''.join(str_per_source))
+    async def _notify_about_sources(listener_stream, id_):
+        sources = store.SourcesStore.get_all()
+        str_per_source = (
+            _gen_notify_aboute_source_msg(source)
+            for source in sources
+        )
+        await listener_stream.write(''.join(str_per_source))
+        for source in sources:
+            store.ListenerStore.set_notified(source.id_)
+
+
+def _gen_notify_aboute_source_msg(source: store.Source):
+    time_since_last_msg = datetime.datetime.now() - source.last_received
+    ms_since_last_msg = time_since_last_msg.total_seconds() * 1000.0
+    return f'[{source.id_}] {source.serial_num} | {source.state} | {ms_since_last_msg}\r\n'
 
 
 class SourcesServer(TCPServer):

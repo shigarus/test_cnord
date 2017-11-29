@@ -63,7 +63,7 @@ class _ListenersStore:
     def is_notified(self, id_, source_id):
         return source_id in self._listeners[id_].sources_notified
 
-    def get_all(self):
+    def get_all(self) -> Sequence[Listener]:
         return tuple(self._listeners.values())
 
 
