@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Callable, Sequence, Tuple
+from typing import Callable, Sequence, Tuple, Any
 
 from tornado.iostream import StreamClosedError, IOStream
 from tornado.ioloop import IOLoop
@@ -114,9 +114,9 @@ class SourcesServer(TCPServer):
     """
 
     def __init__(self,
-                 on_connect: Callable[[IOStream], None],
-                 on_msg: Callable[[IOStream, bytes], None],
-                 on_close: Callable[[IOStream], None],
+                 on_connect: Callable[[IOStream], Any],
+                 on_msg: Callable[[IOStream, bytes], Any],
+                 on_close: Callable[[IOStream], Any],
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_connect = on_connect
@@ -139,8 +139,8 @@ class ListenersServer(TCPServer):
     """
 
     def __init__(self,
-                 on_connect: Callable[[IOStream], None],
-                 on_close: Callable[[IOStream], None],
+                 on_connect: Callable[[IOStream], Any],
+                 on_close: Callable[[IOStream], Any],
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_connect = on_connect
