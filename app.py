@@ -111,7 +111,7 @@ class Dispatcher:
                 logging.debug(f'Listener {listener.id_} notified about source {source_id}')
 
             listener_msg = b''.join(
-                bytes(f'[{source_id}] {key} | {value}\r\n', encoding='ascii')
+                bytes(f'[{source_id}] {str(key, encoding="ascii")} | {value}\r\n', encoding='ascii')
                 for key, value in msgs
             )
             await listener_stream.write(listener_msg)
@@ -168,7 +168,7 @@ class ListenersServer(TCPServer):
         await self._on_connect(stream)
         try:
             while True:
-                await stream.read_bytes(1)
+                await stream.read_until_close()
         except StreamClosedError:
             await self._on_close(stream)
 
