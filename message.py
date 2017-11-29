@@ -7,7 +7,13 @@ import functools
 BYTE_ORDER = 'big'
 
 
-def gen_answer_to_source(success: bool, serial_num: int = None):
+def gen_answer_to_source(success: bool, serial_num: int = None) -> bytes:
+    """
+    Generates bytes msg as:
+    1 byte - header. 0x11 if success else 0x12
+    2 bytes - serial num or 0x00 0x00 if not succeeded
+    1 byte - XOR of the message
+    """
     if success:
         b_serial_num = serial_num.to_bytes(2, byteorder=BYTE_ORDER)
     else:
@@ -22,7 +28,6 @@ def gen_answer_to_source(success: bool, serial_num: int = None):
 def parse_source_bytes(bytes_obj: bytes) -> dict:
     """
     Transforms bytes received from source to dict
-    :param bytes_obj:
     :return: dict(
         header=0x01,
         num=int,  # serial number of the message
