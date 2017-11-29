@@ -1,5 +1,5 @@
 """
-Module is used for working with net messaging protocols
+This module is used to communicate with a source
 """
 import functools
 

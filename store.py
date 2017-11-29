@@ -1,3 +1,7 @@
+"""
+This module represents a store of the system.
+"""
+
 import collections
 import datetime
 import itertools

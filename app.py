@@ -7,7 +7,7 @@ from tornado.ioloop import IOLoop
 from tornado.tcpserver import TCPServer
 
 import config
-import message
+import source_protocol
 import store
 
 
@@ -41,10 +41,15 @@ class Dispatcher:
         pass
 
     async def _on_source_msg(self, source_stream: IOStream, msg: bytes):
+        """
+        Every message from sources has to be redirected to listeners.
+        And every listener wants to receive a state of every source - so we
+        need to update this state every time.
+        """
         logging.debug(f'received from source {msg}')
-        parsed = message.parse_source_bytes(msg)
+        parsed = source_protocol.parse_source_bytes(msg)
         if not parsed:
-            answer_to_source = message.gen_answer_to_source(success=False)
+            answer_to_source = source_protocol.gen_answer_to_source(success=False)
             await source_stream.write(answer_to_source)
             return
         logging.debug(f'parsed to {parsed}')
@@ -56,7 +61,7 @@ class Dispatcher:
         )
         if source_id not in self._sources_connects:
             self._sources_connects[source_id] = source_stream
-        answer_to_source = message.gen_answer_to_source(
+        answer_to_source = source_protocol.gen_answer_to_source(
             success=True,
             serial_num=parsed['num'],
         )
@@ -65,6 +70,9 @@ class Dispatcher:
         await self._send_to_listeners(parsed['msgs'], source_id)
 
     async def _on_source_close(self, source_stream: IOStream):
+        """
+        Need to delete pointer to the stream
+        """
         logging.debug('closed source')
         source_id = next(
             (k for k, v in self._sources_connects.items() if v is source_stream),
@@ -75,11 +83,17 @@ class Dispatcher:
             self._sources_connects.pop(source_id)
 
     async def _on_listener_connect(self, listener_stream: IOStream):
+        """
+        Registers a listener in the system
+        """
         id_ = store.ListenerStore.add_listener()
         self._listeners_connects[id_] = listener_stream
         await self._notify_about_sources(id_, listener_stream)
 
     async def _on_listener_close(self, listener_stream: IOStream):
+        """
+        Need to delete pointer to the stream
+        """
         listener_id = next(
             (k for k, v in self._listeners_connects.items() if v is listener_stream),
             None,
@@ -96,6 +110,10 @@ class Dispatcher:
         )
         logging.debug(f'Listener {listener_id} connected to system')
         await listener_stream.write(b''.join(str_per_source))
+        # Need to store notified state, cuz while we notify current sources -
+        # more of them can connect.
+        # So on every received message we will check if a listener was
+        # notified about a source of the message
         for source in sources:
             logging.debug(f'Listener {listener_id} notified about source {source.id_}')
             store.ListenerStore.set_notified(listener_id, source.id_)
@@ -168,6 +186,7 @@ class ListenersServer(TCPServer):
         await self._on_connect(stream)
         try:
             while True:
+                # just wait until close - we don't expect any data from a listener
                 await stream.read_until_close()
         except StreamClosedError:
             await self._on_close(stream)

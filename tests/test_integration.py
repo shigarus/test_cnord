@@ -1,7 +1,11 @@
+"""
+Tests system as a whole.
+app.py has to be ran before this.
+"""
 import socket
 
-from message import BYTE_ORDER
-from tests import with_xor
+from source_protocol import BYTE_ORDER
+from .test_source_protocol import with_xor
 
 
 class SourceTCP:
