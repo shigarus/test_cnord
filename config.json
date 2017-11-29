@@ -1,0 +1,5 @@
+{
+  "sources_port": 8888,
+  "listeners_port": 8889,
+  "debug": true
+}
