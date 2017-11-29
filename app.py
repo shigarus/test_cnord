@@ -61,7 +61,8 @@ class Dispatcher:
             serial_num=parsed['num'],
         )
         await source_stream.write(answer_to_source)
-        self._send_to_listeners(parsed['msgs'], source_id)
+        logging.debug(f'sources {source_id} notified with {answer_to_source} ')
+        await self._send_to_listeners(parsed['msgs'], source_id)
 
     async def _on_source_close(self, source_stream: IOStream):
         logging.debug('closed source')
@@ -93,8 +94,10 @@ class Dispatcher:
             _gen_notify_about_source_msg(source)
             for source in sources
         )
+        logging.debug(f'Listener {listener_id} connected to system')
         await listener_stream.write(b''.join(str_per_source))
         for source in sources:
+            logging.debug(f'Listener {listener_id} notified about source {source.id_}')
             store.ListenerStore.set_notified(listener_id, source.id_)
 
     async def _send_to_listeners(self, msgs: Sequence[Tuple[str, int]], source_id):
@@ -105,12 +108,14 @@ class Dispatcher:
             if source_id not in listener.sources_notified:
                 source = store.SourcesStore.get_state(source_id)
                 await listener_stream.write(_gen_notify_about_source_msg(source))
+                logging.debug(f'Listener {listener.id_} notified about source {source_id}')
 
-            listener_msg = ''.join(
-                f'[{source_id}] {key} | {value}\r\n'
+            listener_msg = b''.join(
+                bytes(f'[{source_id}] {key} | {value}\r\n', encoding='ascii')
                 for key, value in msgs
             )
             await listener_stream.write(listener_msg)
+            logging.debug(f'To listener {listener.id_} sent {listener_msg}')
 
 
 def _gen_notify_about_source_msg(source: store.Source):

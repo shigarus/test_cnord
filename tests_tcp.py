@@ -5,6 +5,7 @@ from tests import with_xor
 
 
 class SourceTCP:
+    """ Implements model of Source """
 
     def __init__(self, name: bytes):
         assert len(name) == 8
@@ -41,10 +42,31 @@ class SourceTCP:
         return self._request(len(msgs), b''.join(msgs_as_bytes_with_xor))
 
 
-if __name__ == '__main__':
-    stcp = SourceTCP(b'basderty')
+class ListenerTCP:
+    """ Implements model of Listener """
+
+    def __init__(self):
+        self._sock = socket.socket()
+        self._sock.connect(('localhost', 8889))
+        self._registered_sources = {}
+
+    def recv_msg(self):
+        return str(self._sock.recv(512), encoding='ascii')
+
+
+def test():
+    source_client = SourceTCP(b'basderty')
     correct = b'\x11\x00\x01\x10'
     incorrect = b'\x12\x00\x00\x12'
-    assert stcp.send_correct_empty() == correct
-    assert stcp.send_incorrect_inner() == incorrect
-    assert stcp.send_correct_msgs((b'asdfqwer', 1), (b'yuiohjkl', 2)) == correct
+    assert source_client.send_correct_empty() == correct
+    assert source_client.send_incorrect_inner() == incorrect
+    msgs = (b'asdfqwer', 1), (b'yuiohjkl', 2)
+    assert source_client.send_correct_msgs(*msgs) == correct
+    listener_client = ListenerTCP()
+    print(listener_client.recv_msg())
+    source_client.send_correct_msgs(*msgs)
+    print(listener_client.recv_msg())
+
+
+if __name__ == '__main__':
+    test()
