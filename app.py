@@ -93,16 +93,16 @@ class Application:
             # ensure listener knows about source before sending him current messages
             if source_id not in listener.sources_notified:
                 source = store.SourcesStore.get_state(source_id)
-                await listener_stream.write(_gen_notify_aboute_source_msg(source))
+                await listener_stream.write(_gen_notify_about_source_msg(source))
 
             listener_msg = ''.join(
-                f"[{source_id}] {key} | {value}\r\n"
+                f'[{source_id}] {key} | {value}\r\n'
                 for key, value in msgs
             )
             await listener_stream.write(listener_msg)
 
 
-def _gen_notify_aboute_source_msg(source: store.Source):
+def _gen_notify_about_source_msg(source: store.Source):
     time_since_last_msg = datetime.datetime.now() - source.last_received
     ms_since_last_msg = time_since_last_msg.total_seconds() * 1000.0
     return f'[{source.id_}] {source.serial_num} | {source.state} | {ms_since_last_msg}\r\n'
