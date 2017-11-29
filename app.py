@@ -6,6 +6,8 @@ from tornado.ioloop import IOLoop
 from tornado.tcpserver import TCPServer
 
 import config
+import message
+import store
 
 
 class Application:
@@ -20,24 +22,46 @@ class Application:
             on_connect=self._on_listener_connect,
             on_close=self._on_listener_close,
         )
+        self._sources_connects = {}
 
     def listen(self, sources_port, listeners_port):
         self._sources_server.listen(sources_port)
         self._listeners_server.listen(listeners_port)
 
-    def _on_source_connect(self, source: IOStream):
+    def _on_source_connect(self, source_stream: IOStream):
         pass
 
-    def _on_source_msg(self, source: IOStream, msg: IOStream):
+    async def _on_source_msg(self, source_stream: IOStream, msg: bytes):
+        parsed = message.parse_source_bytes(msg)
+        if not parsed:
+            answer_to_source = message.gen_answer_to_source(success=False)
+            await source_stream.write(answer_to_source)
+            return
+        source_id = parsed['source_id']
+        store.SourcesStore.update_state(
+            source_id=source_id,
+            serial_num=parsed['num'],
+            state=parsed['source_state'],
+        )
+        if source_id not in self._sources_connects:
+            self._sources_connects[source_id] = source_stream
+        answer_to_source = message.gen_answer_to_source(
+            success=True,
+            serial_num=parsed['num'],
+        )
+        await source_stream.write(answer_to_source)
+        self._send_to_listeners(parsed['msgs'])
+
+    async def _send_to_listeners(self, msgs):
         pass
 
-    def _on_source_close(self, source: IOStream):
+    def _on_source_close(self, source_stream: IOStream):
         pass
 
-    def _on_listener_connect(self, listener: IOStream):
+    def _on_listener_connect(self, listener_stream: IOStream):
         pass
 
-    def _on_listener_close(self, listener: IOStream):
+    def _on_listener_close(self, listener_stream: IOStream):
         pass
 
 
