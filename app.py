@@ -114,9 +114,9 @@ class SourcesServer(TCPServer):
     """
 
     def __init__(self,
-                 on_connect: Callable[[IOStream]],
-                 on_msg: Callable[[IOStream, bytes]],
-                 on_close: Callable[[IOStream]],
+                 on_connect: Callable[[IOStream], None],
+                 on_msg: Callable[[IOStream, bytes], None],
+                 on_close: Callable[[IOStream], None],
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_connect = on_connect
@@ -124,7 +124,7 @@ class SourcesServer(TCPServer):
         self._on_close = on_close
 
     async def handle_stream(self, stream: IOStream, address: str):
-        self._on_connect(IOStream)
+        self._on_connect(stream)
         try:
             while True:
                 msg: bytes = await stream.read_until_close()
@@ -139,8 +139,8 @@ class ListenersServer(TCPServer):
     """
 
     def __init__(self,
-                 on_connect: Callable[[IOStream]],
-                 on_close: Callable[[IOStream]],
+                 on_connect: Callable[[IOStream], None],
+                 on_close: Callable[[IOStream], None],
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._on_connect = on_connect

@@ -2,7 +2,7 @@ import copy
 import json
 
 _config = None
-default_config_path = './confin.json'
+default_config_path = './config.json'
 
 
 def get_config(path=default_config_path):
