@@ -23,6 +23,7 @@ class Application:
             on_close=self._on_listener_close,
         )
         self._sources_connects = {}
+        self._listeners_connects = {}
 
     def listen(self, sources_port, listeners_port):
         self._sources_server.listen(sources_port)
@@ -64,10 +65,20 @@ class Application:
             self._sources_connects.pop(source_id)
 
     def _on_listener_connect(self, listener_stream: IOStream):
+        id_ = store.ListenerStore.add_listener()
+        self._listeners_connects[id_] = listener_stream
+        self._notify_about_sources(listener_stream)
+
+    async def _notify_about_sources(self, listener_stream):
         pass
 
     def _on_listener_close(self, listener_stream: IOStream):
-        pass
+        listener_id = next(
+            (k for k, v in self._listeners_connects if v is listener_stream),
+            None,
+        )
+        if listener_id:
+            self._listeners_connects.pop(listener_id)
 
 
 class SourcesServer(TCPServer):
