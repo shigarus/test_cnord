@@ -53,13 +53,15 @@ def parse_source_bytes(bytes_obj: bytes) -> dict:
     byte_msgs = bytes_obj[13:]
     if len(byte_msgs) != num_of_msgs*13:
         return {}
-    correct_msgs = filter(None, _iter_source_msgs(byte_msgs))
+    msgs = [msg for msg in _iter_source_msgs(byte_msgs)]
+    if any(it is None for it in msgs):
+        return {}
     return dict(
         header=0x01,
         num=num,
         source_id=source_id,
         source_state=source_state,
-        msgs=[msg for msg in correct_msgs],
+        msgs=[msg for msg in _iter_source_msgs(byte_msgs)],
     )
 
 

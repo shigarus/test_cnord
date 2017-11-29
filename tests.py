@@ -4,7 +4,7 @@ from itertools import chain
 import message
 
 
-def _with_xor(bytes_obj: bytes) -> bytes:
+def with_xor(bytes_obj: bytes) -> bytes:
     return bytes([*bytes_obj, *message.xor(bytes_obj)])
 
 
@@ -37,7 +37,7 @@ class TestParseSourceBytes(unittest.TestCase):
             for key, val in self.messages
         )
         self.messages_as_bytes = [
-            _with_xor(msg)
+            with_xor(msg)
             for msg in self.messages_as_bytes
         ]
         self.correct_meta = 0x01, 0x00, 0x00, *b'asdfghjk', 0x03
@@ -73,21 +73,16 @@ class TestParseSourceBytes(unittest.TestCase):
         inp = bytes([*self.correct_meta, len(self.messages), *chain.from_iterable(self.messages_as_bytes)])
         changed_byte = inp[-1] + 1
         inp = bytes([*inp[:-1], changed_byte])
-        out = dict(msgs=[
-            msg for i, msg in enumerate(self.messages)
-            if i != len(self.messages) - 1
-        ])
-        out.update(self.correct_answer_to_meta)
         res = message.parse_source_bytes(inp)
-        assert res == out, f'received {res} expects  {out}'
+        assert res == {}, f'received {res} expects empty dict'
 
 
 class TestGenAnswerToSource(unittest.TestCase):
 
     def test_fail(self):
         res = message.gen_answer_to_source(False)
-        assert res == _with_xor(bytes([0x12, 0x00, 0x00])), f'got {res}'
+        assert res == with_xor(bytes([0x12, 0x00, 0x00])), f'got {res}'
 
     def test_succes(self):
         res = message.gen_answer_to_source(True, 2)
-        assert res == _with_xor(bytes([0x11, 0x00, 0x02])), f'got {res}'
+        assert res == with_xor(bytes([0x11, 0x00, 0x02])), f'got {res}'

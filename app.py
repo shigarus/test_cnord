@@ -34,11 +34,13 @@ class Application:
         pass
 
     async def _on_source_msg(self, source_stream: IOStream, msg: bytes):
+        logging.debug(f'received from source {msg}')
         parsed = message.parse_source_bytes(msg)
         if not parsed:
             answer_to_source = message.gen_answer_to_source(success=False)
             await source_stream.write(answer_to_source)
             return
+        logging.debug(f'parsed to {parsed}')
         source_id = parsed['source_id']
         store.SourcesStore.update_state(
             source_id=source_id,
@@ -55,11 +57,13 @@ class Application:
         self._send_to_listeners(parsed['msgs'], source_id)
 
     def _on_source_close(self, source_stream: IOStream):
+        logging.debug('closed source')
         source_id = next(
-            (k for k, v in self._sources_connects if v is source_stream),
+            (k for k, v in self._sources_connects.items() if v is source_stream),
             None,
         )
         if source_id:
+            logging.debug(f'source had id {source_id}')
             self._sources_connects.pop(source_id)
 
     def _on_listener_connect(self, listener_stream: IOStream):
@@ -69,7 +73,7 @@ class Application:
 
     def _on_listener_close(self, listener_stream: IOStream):
         listener_id = next(
-            (k for k, v in self._listeners_connects if v is listener_stream),
+            (k for k, v in self._listeners_connects.items() if v is listener_stream),
             None,
         )
         if listener_id:
@@ -127,8 +131,9 @@ class SourcesServer(TCPServer):
         self._on_connect(stream)
         try:
             while True:
-                msg: bytes = await stream.read_until_close()
-                await self._on_msg(stream, msg)
+                meta = await stream.read_bytes(13)
+                msgs = await stream.read_bytes(meta[-1] * 13)
+                await self._on_msg(stream, meta+msgs)
         except StreamClosedError:
             self._on_close(stream)
 
