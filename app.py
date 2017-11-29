@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import Callable
 
@@ -69,9 +70,6 @@ class Application:
         self._listeners_connects[id_] = listener_stream
         self._notify_about_sources(listener_stream)
 
-    async def _notify_about_sources(self, listener_stream):
-        pass
-
     def _on_listener_close(self, listener_stream: IOStream):
         listener_id = next(
             (k for k, v in self._listeners_connects if v is listener_stream),
@@ -79,6 +77,16 @@ class Application:
         )
         if listener_id:
             self._listeners_connects.pop(listener_id)
+
+    @staticmethod
+    def _notify_about_sources(listener_stream):
+        str_per_source = []
+        for source in store.SourcesStore.get_all():
+            time_since_last_msg = datetime.datetime.now() - source.last_received
+            ms_since_last_msg = time_since_last_msg.total_seconds() * 1000.0
+            msg = f'[{source.id_}] {source.serial_num} | {source.state} | {ms_since_last_msg}\r\n'
+            str_per_source.append(msg)
+        listener_stream.write(''.join(str_per_source))
 
 
 class SourcesServer(TCPServer):

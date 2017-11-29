@@ -1,7 +1,7 @@
 import collections
 import datetime
 import itertools
-from typing import Dict
+from typing import Dict, Sequence
 
 Source = collections.namedtuple('Source', 'id_ serial_num state last_received')
 Listener = collections.namedtuple('Listener', 'id_ sources_notified')
@@ -31,7 +31,7 @@ class _SourcesStore:
     def get_state(self, source_id: str) -> Source:
         return self._sources.get(source_id)
 
-    def get_all(self):
+    def get_all(self) -> Sequence[Source]:
         return tuple(self._sources.values())
 
 
